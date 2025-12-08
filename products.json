@@ -1,0 +1,51 @@
+[
+    {
+        "id": "p1",
+        "name": "برجر لحم كلاسيك",
+        "price": 55.0,
+        "image": "/static/img/burger.svg",
+        "category": "برجر"
+    },
+    {
+        "id": "p2",
+        "name": "بيتزا مارجريتا حجم وسط",
+        "price": 120.0,
+        "image": "/static/img/pizza.svg",
+        "category": "بيتزا"
+    },
+    {
+        "id": "p3",
+        "name": "سجق إسكندراني (ساندويتش)",
+        "price": 55.0,
+        "image": "/static/img/sujuk.svg",
+        "category": "سجق"
+    },
+    {
+        "id": "p4",
+        "name": "كبده إسكندراني حار",
+        "price": 60.0,
+        "image": "/static/img/liver.svg",
+        "category": "كبده"
+    },
+    {
+        "id": "p5",
+        "name": "حواوشي لحم بلدي",
+        "price": 70.0,
+        "image": "/static/img/hawawshi.svg",
+        "category": "حواوشي"
+    },
+    {
+        "id": "p6",
+        "name": "برجر دجاج بانيه مقرمش",
+        "price": 80.0,
+        "image": "/static/img/chicken.svg",
+        "category": "برجر"
+    },
+    {
+        "id": "p7",
+        "name": "بطاطس محمرة كبيرة",
+        "price": 30.0,
+        "image": "/static/img/fries.svg",
+        "category": "جانبيات"
+    }
+]

@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>لوحة الأدمن</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> 
+<style>
+/* بعض الأنماط الافتراضية إذا لم تكن موجودة في style.css */
+.card { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+.card.bg-danger { background-color: #dc3545; color: white; }
+.card-title { margin-top: 0; }
+.btn { padding: 8px 15px; border: none; cursor: pointer; border-radius: 4px; }
+.btn-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.btn-warning { background-color: #ffc107; color: #212529; }
+.admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.orders-list { max-height: 400px; overflow-y: auto; }
+.order-card { border-bottom: 1px dashed #ccc; padding-bottom: 10px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<nav class="topnav">
+<div class="logo"> admin - Mina Munir</div>
+<div><a href="{{ url_for('logout') }}">خروج</a> | <a href="{{ url_for('menu') }}">عرض القائمة</a></div>
+</nav>
+<main class="container">
+<section class="admin-grid">
+<div class="card">
+<h3>المنتجات</h3>
+<table class="table">
+<thead><tr><th>ID</th><th>اسم</th><th>السعر</th><th>تعديل</th></tr></thead>
+<tbody>
+{% for p in products %}
+<tr data-id="{{ p.id }}">
+<td>{{ p.id }}</td>
+<td>{{ p.name }}</td>
+<td class="price-cell">{{ p.price }}</td>
+<td>
+<input class="new-price" type="number" placeholder="السعر الجديد">
+<button class="btn update-price-btn">حفظ</button>
+<button class="btn delete-product-btn">حذف</button>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+<div class="add-product">
+<h4>إضافة منتج جديد</h4>
+<input type="text" id="new_name" placeholder="اسم المنتج">
+<input type="number" id="new_price" placeholder="السعر">
+<input type="text" id="new_image" placeholder="رابط الصورة">
+<input type="text" id="new_category" placeholder="التصنيف">
+<button id="addProductBtn" class="btn">إضافة</button>
+</div>
+</div>
+
+<div class="card">
+<h3>الطلبات</h3>
+<div class="orders-list">
+{% if orders %}
+{% for o in orders %}
+<div class="order-card">
+<div><strong>{{ o.order_id }}</strong> — {{ o.user }} — {{ o.timestamp }}</div>
+<div>الحالة: **{{ o.status }}** — الإجمالي: **{{ o.total }}** ج.م</div>
+{% if o.mobile and o.location %}
+<div style="font-size: 0.9em; margin-top: 5px;">
+    **رقم الهاتف:** {{ o.mobile }}
+    <br>
+    **الموقع:** {% if 'GPS:' in o.location %}
+    
+    {% set coords = o.location.split('GPS:')[1].strip() %}
+        <a href="https://maps.google.com/?q={{ coords }}" target="_blank" style="color: blue; text-decoration: underline;">
+             عرض الموقع على الخريطة
+        </a>
+    {% else %}
+        {{ o.location }}
+    {% endif %}
+</div>
+{% endif %}
+<details>
+<summary>العناصر ({{ o.order_items|length }})</summary>
+<ul>
+{% for it in o.order_items %}
+<li>{{ it.name }} × {{ it.qty }} — {{ it.price }} ج.م</li>
+{% endfor %}
+</ul>
+</details>
+</div>
+{% endfor %}
+{% else %}
+<p>لا توجد طلبات حتى الآن</p>
+{% endif %}
+</div>
+
+<hr>
+<div class="card bg-danger text-white">
+    <div class="card-body">
+        <h5 class="card-title">منطقة الإجراءات الخطيرة</h5>
+        <p class="card-text">استخدم هذا الزر لمسح جميع الطلبات المخزنة في النظام بشكل دائم. **هذه العملية لا يمكن التراجع عنها!**</p>
+        
+        <form id="deleteAllOrdersForm" method="POST" action="{{ url_for('delete_all_orders') }}" 
+              onsubmit="return confirm('⚠️ تحذير: هل أنت متأكد تماماً من حذف جميع الطلبات؟ هذا سيؤدي لمسح جميع بيانات الطلبات بشكل دائم.');">
+            
+            <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token', '') }}">
+            
+            <button type="submit" class="btn btn-warning btn-lg text-dark" style="width: 100%;">
+                مسح جميع الطلبات
+            </button>
+        </form>
+    </div>
+</div>
+</div>
+</section>
+</main>
+
+<input type="hidden" id="csrf_token" value="{{ session.get('csrf_token', '') }}">
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // جلب CSRF Token من الحقل المخفي
+    const csrfToken = document.getElementById('csrf_token') ? document.getElementById('csrf_token').value : '';
+
+    /**
+     * دالة لإرسال طلب POST آمن (مع CSRF Token)
+     * تستخدم لـ: تحديث السعر، حذف منتج، إضافة منتج.
+     * ملاحظة: تم إزالة هذا المنطق من زر "مسح جميع الطلبات" وتم استخدام نموذج HTML قياسي بدلاً منه لتبسيط إرسال CSRF.
+     */
+    async function sendAdminRequest(url, body = null, formData = null) {
+        if (!csrfToken) {
+            alert('خطأ أمني: رمز CSRF غير موجود. يرجى إعادة تحميل الصفحة.');
+            return { success: false, message: 'خطأ أمني' };
+        }
+
+        const headers = {};
+        let requestBody;
+
+        if (formData) {
+            // FormData: نضيف الرمز إليها
+            formData.append('csrf_token', csrfToken);
+            requestBody = formData;
+        } else if (body) {
+            // JSON: نضيف الرمز إلى الجسم
+            headers['Content-Type'] = 'application/json';
+            body.csrf_token = csrfToken;
+            requestBody = JSON.stringify(body);
+        } else {
+            return { success: false, message: 'بيانات الطلب غير صالحة.' };
+        }
+
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: headers,
+                body: requestBody
+            });
+            return res.json();
+        } catch(e) {
+            console.error("Fetch error:", e);
+            return { success: false, message: 'حدث خطأ في الاتصال بالخادم.' };
+        }
+    }
+
+
+    // تحديث السعر والحذف (باستخدام AJAX)
+    document.addEventListener('click', async (e) => {
+        const tr = e.target.closest('tr');
+        if (!tr) return;
+        const id = tr.getAttribute('data-id');
+
+        // 1. تحديث السعر
+        if (e.target.classList.contains('update-price-btn')) {
+            const priceInput = tr.querySelector('.new-price');
+            const price = priceInput.value;
+            if (!price || parseFloat(price) <= 0) {
+                return alert('الرجاء إدخال سعر صحيح وموجب.');
+            }
+
+            const form = new FormData();
+            form.append('id', id);
+            form.append('price', price);
+            
+            // إرسال الطلب عبر الدالة الآمنة (FormData)
+            const j = await sendAdminRequest("{{ url_for('update_price') }}", null, form);
+            
+            alert(j.message);
+            if (j.success) {
+                tr.querySelector('.price-cell').textContent = parseFloat(price).toFixed(2);
+                priceInput.value = '';
+            }
+        }
+
+        // 2. حذف المنتج
+        if (e.target.classList.contains('delete-product-btn')) {
+            if (!confirm('هل أنت متأكد من حذف المنتج؟')) return;
+
+            // إرسال الطلب عبر الدالة الآمنة (JSON)
+            const j = await sendAdminRequest("{{ url_for('delete_product') }}", { id: id });
+            
+            alert(j.message);
+            if (j.success) {
+                tr.remove();
+            }
+        }
+    });
+
+    // 3. إضافة منتج جديد
+    document.getElementById('addProductBtn')?.addEventListener('click', async () => {
+        const name = document.getElementById('new_name').value;
+        const price = document.getElementById('new_price').value;
+        const image = document.getElementById('new_image').value;
+        const category = document.getElementById('new_category').value;
+
+        if (!name || !price || parseFloat(price) <= 0) {
+            return alert('الرجاء إدخال الاسم والسعر بشكل صحيح.');
+        }
+
+        // إرسال الطلب عبر الدالة الآمنة (JSON)
+        const j = await sendAdminRequest("{{ url_for('add_product') }}", { name, price, image, category });
+
+        alert(j.message);
+        if (j.success) {
+            location.reload();
+        }
+    });
+});
+</script>
+</body>
+</html>

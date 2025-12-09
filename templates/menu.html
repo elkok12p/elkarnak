@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title> قايمه طعام الكرنك -  </title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+
+body{
+    margin:0;
+    font-family:'Tajawal', sans-serif;
+    background:#0d0d0d;
+    color:#fff;
+}
+
+/* ---------- الهيدر الجديد ---------- */
+.topnav{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:15px 20px;
+    background:#1b1b1b;
+    border-bottom:1px solid #333;
+    position:sticky;
+    top:0;
+    z-index:10;
+}
+
+.logo{
+    font-size:1.4rem;
+    font-weight:700;
+    color:#ff6a00;
+}
+
+.welcome{
+    font-size:1rem;
+    opacity:0.9;
+}
+
+.top-right{
+    display:flex;
+    align-items:center;
+    gap:15px;
+}
+
+.topnav a{
+    color:#ff4f4f;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.cart-icon{
+    font-size:1.5rem;
+    cursor:pointer;
+    padding:5px 10px;
+    border-radius:10px;
+    transition:0.2s;
+    background:#2a2a2a;
+}
+.cart-icon:hover{
+    background:#333;
+}
+
+/* ---------- السلة الجديدة ---------- */
+.cart-panel{
+    position:absolute;
+    top:65px;
+    right:20px;
+    width:280px;
+    background:#1c1c1c;
+    border-radius:12px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.5);
+    padding:15px;
+    display:none;
+    animation:drop 0.25s ease-out;
+    z-index: 9; /* للتأكد من أنها فوق المنتجات */
+}
+@keyframes drop{
+    from{transform:translateY(-15px);opacity:0;}
+    to{transform:translateY(0);opacity:1;}
+}
+
+.cart-item{
+    padding:8px 0;
+    border-bottom:1px solid #333;
+    font-size:0.95rem;
+}
+
+.cart-footer{
+    margin-top:10px;
+    display:flex;
+    justify-content:space-between;
+    font-size:1rem;
+    font-weight:bold;
+}
+
+.btn{
+    width:100%;
+    margin-top:10px;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    background:#ff6a00;
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+}
+.btn:hover{
+    background:#ff7f1a;
+}
+
+/* ---------- الفلاتر ---------- */
+.chip{
+    display:inline-block;
+    padding:6px 12px;
+    margin:3px;
+    background:#222;
+    border-radius:20px;
+    cursor:pointer;
+    transition:0.2s;
+}
+.chip:hover{
+    background:#333;
+}
+.chip.active{
+    background:#ff6a00;
+}
+
+/* ---------- المنتجات ---------- */
+.products-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+    gap:15px;
+    padding:15px;
+}
+
+.product-card{
+    background:#181818;
+    padding:10px;
+    border-radius:12px;
+    text-align:center;
+    transition:0.25s;
+}
+.product-card:hover{
+    transform:translateY(-5px);
+    background:#202020;
+}
+.product-card img{
+    width:110px;
+    height:110px;
+    border-radius:10px;
+}
+.qty{
+    width:55px;
+    padding:5px;
+    background:#222;
+    border:none;
+    color:#fff;
+    border-radius:6px;
+}
+
+/* ---------- المودال ---------- */
+.modal{display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;background-color:rgba(0,0,0,0.85);}
+.modal-content{
+    background:#1b1b1b;
+    color:#fff;
+    margin:auto;
+    margin-top:120px;
+    padding:20px;
+    border-radius:12px;
+    width:92%;
+    max-width:400px;
+    text-align:center;
+}
+.modal input{
+    width:90%;
+    padding:10px;
+    border-radius:8px;
+    background:#222;
+    border:none;
+    color:#fff;
+    margin:8px 0;
+}
+
+.close{
+    color:#aaa;
+    float:right;
+    font-size:28px;
+    cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<nav class="topnav">
+    <div class="logo"> elkarnak 💬</div>
+
+    <div class="welcome">مرحباً، <strong>{{ username }}</strong> 👋</div>
+
+    <div class="top-right">
+        <div class="cart-icon" id="toggleCart">🛒 <span id="cartCount">0</span></div>
+        <a href="{{ url_for('logout') }}">خروج</a>
+    </div>
+</nav>
+
+
+<aside class="cart-panel" id="cartPanel">
+    <h3 style="margin:0 0 10px;">السلة</h3>
+    <div id="cartItems">
+        <p style="text-align:center;opacity:0.7;">السلة فارغة</p>
+    </div>
+    <div class="cart-footer">
+        <span>الإجمالي:</span>
+        <span id="cartTotal">0.00 ج.م</span>
+    </div>
+    <button id="placeOrderBtn" class="btn">إرسال الطلب</button>
+</aside>
+
+
+<main class="container">
+<h2 style="padding:10px;">القائمة</h2>
+
+<div id="filterChips" style="padding:0 10px;">
+  <span class="chip active" data-cat="all">الكل</span>
+  {% for cat in categories %}
+  <span class="chip" data-cat="{{ cat }}">{{ cat }}</span>
+  {% endfor %}
+</div>
+
+<input type="text" id="searchInput" placeholder="بحث..." 
+       style="width:95%;margin:10px;padding:10px;border-radius:8px;border:none;background:#222;color:#fff;">
+
+<div class="products-grid">
+{% for p in products %}
+<div class="product-card" data-cat="{{ p.category }}">
+    <img src="{{ p.image }}" alt="{{ p.name }}">
+    <h4 class="product-name">{{ p.name }}</h4>
+    <p style="opacity:0.8;">السعر: {{ p.price }} ج.م</p>
+
+    <input type="number" class="qty" data-id="{{ p.id }}" min="1" value="1">
+    <button class="add-btn btn" 
+            data-id="{{ p.id }}" 
+            data-name="{{ p.name }}" 
+            data-price="{{ p.price }}">
+        أضف للسلة
+    </button>
+</div>
+{% endfor %}
+</div>
+</main>
+
+<div id="orderModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>تأكيد الطلب</h2>
+        <p>الرجاء تأكيد بياناتك لإرسال الطلب بشكل نهائي:</p>
+        <input type="text" id="mobile" placeholder="رقم الهاتف (11 رقم)" required>
+        <input type="text" id="location" placeholder="عنوان التوصيل المفصل" required>
+        <button id="getLocationBtn" class="btn" style="background:#444;margin-bottom:10px;">تحديد الموقع الحالي (GPS)</button>
+        <button id="confirmOrderBtn" class="btn" style="background:#00a300;">تأكيد وإرسال الطلب</button>
+    </div>
+</div>
+
+<script>
+// التفاف الكود بـ DOMContentLoaded يضمن تشغيله بعد تحميل الصفحة بالكامل
+document.addEventListener('DOMContentLoaded', () => {
+
+    /* -----------------------------
+        منطق سلة المشتريات والطلبات (JavaScript Code)
+    ------------------------------*/
+
+    let cart = []; // مصفوفة السلة الرئيسية
+
+    /* تعريف العناصر الأساسية لضمان عمل الـ JavaScript */
+    const toggleCartBtn = document.getElementById("toggleCart");
+    const cartPanel = document.getElementById("cartPanel");
+    const modal = document.getElementById('orderModal');
+    const span = document.querySelector('.close');
+    const searchInput = document.getElementById('searchInput');
+
+
+    /* 1) فتح/إغلاق لوحة السلة */
+    toggleCartBtn?.addEventListener('click', () => {
+        if(cartPanel) {
+            cartPanel.style.display = (cartPanel.style.display === "block") ? "none" : "block";
+        }
+    });
+
+    /* 2) إعادة حساب وعرض السلة */
+    function recalc() {
+        const cartItems = document.getElementById('cartItems');
+        const totalEl = document.getElementById('cartTotal');
+        const cartCount = document.getElementById('cartCount');
+        let total = 0;
+
+        // التحقق من وجود العناصر الأساسية للسلة
+        if (!cartItems || !totalEl || !cartCount) return;
+
+        if (cart.length === 0) {
+            cartItems.innerHTML = '<p style="text-align:center;opacity:0.7;">السلة فارغة</p>';
+        } else {
+            cartItems.innerHTML = '';
+            cart.forEach(it => {
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;">
+                        <div>${it.name} × ${it.qty}</div>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <span>${(it.price * it.qty).toFixed(2)} ج.م</span>
+                            <button class="remove-btn" data-id="${it.id}" style="background:transparent;color:#ff4f4f;padding:0;font-size:1.5rem;line-height:1;opacity:0.8;cursor:pointer;">&times;</button>
+                        </div>
+                    </div>`;
+                cartItems.appendChild(div);
+                total += it.price * it.qty;
+            });
+        }
+
+        totalEl.textContent = total.toFixed(2) + ' ج.م';
+        cartCount.textContent = cart.length;
+
+        if (cartPanel && cart.length > 0) {
+            // تحديث الحركة على لوحة السلة
+            cartPanel.animate([{transform:'scale(1)'},{transform:'scale(1.01)'},{transform:'scale(1)'}], {duration:260});
+        }
+    }
+    recalc();
+
+    /* 3) النقر العام (إضافة، حذف، فلترة) */
+    document.addEventListener('click', e => {
+        // إضافة للسلة
+        if (e.target.classList.contains('add-btn')) {
+            const id = e.target.dataset.id;
+            const name = e.target.dataset.name;
+            const price = parseFloat(e.target.dataset.price);
+
+            const qtyInput = e.target.closest('.product-card')?.querySelector('.qty');
+            const qty = parseInt(qtyInput?.value || '1', 10);
+
+            if (qty <= 0) return alert('اختر كمية صحيحة');
+
+            const exist = cart.find(c => c.id === id);
+            if (exist) {
+                exist.qty += qty;
+                e.target.animate([{transform:'translateX(0)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}], {duration:260});
+            } else {
+                cart.push({id, name, price, qty});
+
+                // أنيميشن الطيران
+                const img = e.target.closest('.product-card')?.querySelector('img');
+                if (img) {
+                    const fly = img.cloneNode(true);
+                    fly.style.position = 'fixed';
+                    fly.style.zIndex = 9999;
+                    fly.style.width = '80px';
+                    fly.style.height = '80px';
+                    const rect = img.getBoundingClientRect();
+                    fly.style.left = rect.left + 'px';
+                    fly.style.top = rect.top + 'px';
+                    document.body.appendChild(fly);
+
+                    const tr = toggleCartBtn?.getBoundingClientRect();
+                    if (tr) {
+                        fly.animate(
+                            [
+                                {left: rect.left+'px', top: rect.top+'px', opacity:1},
+                                {left: (tr.left+10)+'px', top: (tr.top+10)+'px', opacity:0.2, transform:'scale(0.3)'}
+                            ],
+                            {duration:700, easing:'cubic-bezier(.2,.9,.3,1)'}
+                        ).onfinish = () => fly.remove();
+                    }
+                }
+            }
+            recalc();
+        }
+
+        // حذف منتج
+        if (e.target.classList.contains('remove-btn')) {
+            const id = e.target.dataset.id;
+            const index = cart.findIndex(item => item.id === id);
+            if (index !== -1) {
+                cart.splice(index, 1);
+                recalc();
+            }
+        }
+
+        // فلترة
+        if (e.target.classList.contains('chip')) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            e.target.classList.add('active');
+
+            const cat = e.target.dataset.cat;
+            document.querySelectorAll('.product-card').forEach(card => {
+                card.style.display = (cat === 'all' || card.dataset.cat === cat) ? 'block' : 'none';
+            });
+        }
+    });
+
+    /* 4) مودال الطلب */
+    document.getElementById('placeOrderBtn')?.addEventListener('click', () => {
+        if (cart.length === 0) return alert('السلة فارغة');
+        if (cartPanel) cartPanel.style.display = 'none';
+        if (modal) modal.style.display = 'block';
+    });
+    span?.addEventListener('click', () => modal.style.display = 'none');
+    window.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
+
+    /* 5) تحديد الموقع GPS */
+    document.getElementById('getLocationBtn')?.addEventListener('click', () => {
+        if (navigator.geolocation) {
+            alert('جارٍ تحديد موقعك...');
+            navigator.geolocation.getCurrentPosition(pos => {
+                const locationInput = document.getElementById('location');
+                if (locationInput) {
+                    locationInput.value = `GPS: ${pos.coords.latitude}, ${pos.coords.longitude}`;
+                }
+            }, err => alert('تعذر الحصول على الموقع: ' + err.message));
+        } else alert('المتصفح لا يدعم تحديد الموقع');
+    });
+
+    /* 6) تأكيد الطلب مع HMAC */
+    document.getElementById('confirmOrderBtn')?.addEventListener('click', async () => {
+        const mobile = document.getElementById('mobile')?.value.trim();
+        const location = document.getElementById('location')?.value.trim();
+        const total = cart.reduce((s,i)=>s+i.price*i.qty,0);
+
+        if (!/^\d{11}$/.test(mobile)) return alert('ادخل رقم هاتف صحيح مكون من 11 رقم');
+        if (!location || location.length < 5) return alert('الرجاء إدخال موقع توصيل واضح ومفصل');
+
+        try {
+            const signingPayload = {total, mobile};
+            const signRes = await fetch('/get_order_signature',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(signingPayload)
+            });
+            if(!signRes.ok){
+                if(signRes.status===401) window.location.href='/login';
+                return alert('خطأ في عملية التحقق الأمني.');
+            }
+            const signData = await signRes.json();
+            if(!signData.signature || !signData.timestamp) return alert('خطأ: لم يتم الحصول على توقيع أمنى سليم.');
+
+            const finalPayload = {
+                total, 
+                cart, 
+                mobile, 
+                location, 
+                signature:signData.signature, 
+                timestamp:signData.timestamp
+            };
+            const finalRes = await fetch('/place_order',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify(finalPayload)
+            });
+            const finalJson = await finalRes.json();
+            
+            alert(finalJson.message || (finalJson.success ? 'تم إرسال الطلب بنجاح' : 'خطأ في إرسال الطلب'));
+            
+            if(finalJson.success){
+                cart.length = 0;
+                recalc();
+                if(modal) modal.style.display = 'none';
+            } else if(finalRes.status===401) window.location.href='/login';
+        } catch(e){ alert('حدث خطأ: '+e.message); }
+    });
+
+    /* 7) البحث */
+    searchInput?.addEventListener('input', e=>{
+        const q = e.target.value.trim().toLowerCase();
+        document.querySelectorAll('.product-card').forEach(card=>{
+            const name = card.querySelector('.product-name')?.textContent.toLowerCase() || '';
+            card.style.display = (!q || name.includes(q)) ? 'block' : 'none';
+        });
+    });
+});
+</script>
+
+</body>
+</html>

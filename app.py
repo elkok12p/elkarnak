@@ -8,8 +8,9 @@ from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('elkokkk', 'kscvevhbjvbeyrgeuvb')
 # مفتاح سري للجلسات (يجب تغييره في الإنتاج)
-app.secret_key = 'Wp0Z&a!c9Qx$g2Jt7H^vY5mP#rL4sB8K'
+#app.secret_key = 'Wp0Z&a!c9Qx$g2Jt7H^vY5mP#rL4sB8K'
 # مفتاح سري لتوقيع HMAC (يجب أن يكون معقداً وسرياً للغاية ومخزناً خارج الكود)
 HMAC_SECRET_KEY = 'Fr0ntK!tch3n_Ord3rS3cur3_&Zf9Lp@qYc7Dv6hX2GjM4wT3kR8B5nU'
 ADMIN_USERNAME = "#AdMiN_m@KoK#"

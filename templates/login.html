@@ -3,168 +3,294 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title> login - elkarnak </title>
-
+    <title>تسجيل الدخول - Elkarnak</title>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap');
+        /* ==================================
+           الأنماط الأساسية ولوحة الألوان (الخلفية الداكنة)
+        ================================== */
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap');
 
-        body {
+        :root {
+            /* ألوان الموقع */
+            --primary-red: #C3352A; /* أحمر داكن / مارون */
+            --secondary-orange: #E88320; 
+
+            /* ألوان الخلفية والكارد (تعديل رئيسي للخلفية الداكنة) */
+            --background-base: #2C2C2C; /* رمادي داكن للخلفية الأساسية */
+            --card-fill: #FFFFFF; /* خلفية الكارد بيضاء للحفاظ على التباين */
+            --card-accent: #3A3A3A; /* خلفية منطقة الصورة (رمادي أغمق قليلاً) */
+
+            /* ألوان النصوص والحدود */
+            --text-dark: #2C2C2C; /* نص غامق (يستخدم داخل الكارد الأبيض فقط) */
+            --text-light: #707070; /* نص خفيف (مساعد) */
+            --border-color: #E0E0E0; /* حدود ناعمة */
+            
+            --shadow-light: 0 5px 15px rgba(0, 0, 0, 0.2); /* ظل أغمق قليلاً للخلفية الداكنة */
+            --shadow-heavy: 0 20px 50px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: "Tajawal", sans-serif;
-            background: radial-gradient(circle at top, #ff884d, #ff5722, #1a1a1a);
-            height: 100vh;
+            font-family: 'Tajawal', sans-serif;
+            direction: rtl;
+        }
+        
+        body {
+            /* تطبيق الخلفية الرمادية الداكنة */
+            background-color: var(--background-base); 
             display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ==================================
+           تنسيق حاوية التسجيل الرئيسية
+        ================================== */
+        .login-main-card {
+            width: 90%;
+            max-width: 900px;
+            display: flex;
+            /* استخدام لون أغمق قليلاً للكارد الخارجي */
+            background-color: var(--card-accent); 
+            border-radius: 25px;
+            box-shadow: var(--shadow-heavy);
             overflow: hidden;
+            position: relative;
         }
 
-        /* فقاعات خلفية */
-        .bubble {
+        /* الشكل البيضاوي كديكور */
+        .login-main-card::before {
+            content: '';
             position: absolute;
-            background: rgba(255,255,255,0.1);
+            top: -150px;
+            left: -150px;
+            width: 300px;
+            height: 300px;
+            background-color: rgba(255, 255, 255, 0.08); /* أبيض شفاف على الخلفية الداكنة */
             border-radius: 50%;
-            animation: float 12s infinite ease-in-out;
-            filter: blur(3px);
+            z-index: 1;
         }
-
-        .bubble:nth-child(1){width:120px;height:120px;top:10%;right:10%;animation-delay:0s;}
-        .bubble:nth-child(2){width:180px;height:180px;bottom:5%;left:15%;animation-delay:2s;}
-        .bubble:nth-child(3){width:90px;height:90px;top:40%;left:5%;animation-delay:4s;}
-
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-35px); }
-            100% { transform: translateY(0px); }
-        }
-
-        /* كارت الدخول */
-        .card {
-            width: 95%;
-            max-width: 400px;
-            padding: 30px;
-            border-radius: 24px;
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 15px 45px rgba(0,0,0,0.35);
-            backdrop-filter: blur(18px);
-            text-align: center;
-            color: #fff;
-            transform: translateY(15px);
-            animation: fadeIn 0.9s ease forwards;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(45px) scale(0.9); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-
-        .logo {
-            width: 95px;
-            height: 95px;
-            margin: 0 auto 15px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.18);
+        
+        /* ==================================
+           جزء نموذج تسجيل الدخول (اليمين) - لم يتغير كثيراً ليبقى ساطعاً
+        ================================== */
+        .form-section {
+            flex: 1;
+            padding: 40px;
+            background-color: var(--card-fill); /* أبيض */
+            border-radius: 25px;
+            box-shadow: var(--shadow-light);
+            margin: 30px;
+            z-index: 10;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-size: 2.6rem;
-            font-weight: bold;
-            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+            text-align: center;
         }
-
-        h1 {
-            margin: 0;
-            font-size: 1.9rem;
-        }
-
-        .sub {
-            opacity: 0.85;
+        
+        .logo-container {
             margin-bottom: 25px;
-            font-size: 1rem;
         }
 
-        label {
+        .logo-image {
+            width: 100px;
+            height: auto;
             display: block;
-            text-align: right;
-            margin-bottom: 6px;
+            margin: 0 auto 5px;
         }
 
-        input {
+        .logo-text-small {
+            font-size: 0.9em;
+            color: var(--primary-red);
+            margin-top: 5px;
+        }
+        
+        .form-section h2 {
+            font-size: 1.8em;
+            color: var(--primary-red); 
+            margin-bottom: 25px;
+            font-weight: 800;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
             width: 100%;
-            padding: 13px;
-            border-radius: 14px;
+            max-width: 300px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            /* حدود ناعمة بلون رمادي فاتح */
+            border: 1px solid var(--border-color); 
+            border-radius: 12px;
+            padding: 10px 15px;
+            background-color: #F8F8F8;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .input-wrapper:focus-within {
+            border-color: var(--primary-red); 
+            box-shadow: 0 0 5px rgba(195, 53, 42, 0.5);
+        }
+
+        .input-wrapper input[type="text"] {
+            flex-grow: 1;
             border: none;
             outline: none;
-            margin-bottom: 20px;
-            font-size: 1rem;
+            background: transparent;
+            font-size: 1em;
+            color: var(--text-dark);
+            padding: 0;
+            text-align: right;
+        }
+        
+        .input-wrapper input[type="text"]::placeholder {
+            color: #AAAAAA; 
         }
 
-        button {
+        .input-wrapper .icon {
+            font-size: 1.2em;
+            color: var(--text-light);
+            margin-left: 10px;
+        }
+
+        .btn-login {
             width: 100%;
-            background: #ffffff;
-            color: #222;
-            padding: 12px;
+            max-width: 300px;
+            padding: 14px;
+            background-color: var(--primary-red);
+            color: var(--card-fill); 
             border: none;
-            border-radius: 14px;
-            font-size: 1.1rem;
+            border-radius: 12px;
+            font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.25s;
-        }
-
-        button:hover {
-            transform: translateY(-3px) scale(1.03);
-            background: #f7f7f7;
-        }
-
-        .browse {
-            display: block;
-            margin-top: 12px;
-            text-decoration: underline;
-            color: #fff;
-        }
-
-        .error {
-            background: rgba(255,0,0,0.25);
-            padding: 10px;
-            border-radius: 10px;
+            transition: background-color 0.3s, transform 0.2s;
             margin-bottom: 15px;
-            color: #ffeaea;
+        }
+
+        .btn-login:hover {
+            background-color: #A32A20; 
+            transform: translateY(-2px);
+        }
+        
+        .warning-text {
+            color: var(--text-light);
+            font-size: 0.85em;
+            margin-top: 10px;
+            max-width: 300px;
+        }
+        
+        .error-message {
+            color: #D64242; 
+            background-color: #FEEEEE;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 15px;
             font-weight: bold;
+            border: 1px solid #D64242;
+        }
+        
+        /* ==================================
+           جزء الصورة (اليسار)
+        ================================== */
+        .image-section {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .image-section img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 15px;
+            object-fit: contain;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); /* زيادة الظل على الخلفية الداكنة */
+            position: relative;
+            z-index: 5;
+        }
+
+        /* ==================================
+           تنسيقات شاشات صغيرة (Responsive)
+        ================================== */
+        @media (max-width: 768px) {
+            .login-main-card {
+                flex-direction: column;
+                width: 100%;
+                margin: 0;
+            }
+            
+            .image-section {
+                display: none;
+            }
+
+            .form-section {
+                margin: 20px;
+                padding: 30px;
+                border-radius: 20px;
+            }
+            
+            .login-main-card::before {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .form-section {
+                padding: 25px;
+            }
+            h2 { font-size: 1.6em; }
+            .btn-login { font-size: 1.05em; padding: 12px; }
+            .warning-text { font-size: 0.8em; }
         }
     </style>
 </head>
-
 <body>
 
-    <!-- فقاعات ديكور -->
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-
-    <!-- كارت تسجيل الدخول -->
-    <div class="card">
-
-        <div class="logo">🍽️</div>
-
-        <h1> elkarnak </h1>
-        <p class="sub">أهلاً بيك… سجل دخولك وابدأ تطلب أجمد أكل 🔥</p>
-
+<div class="login-main-card">
+    
+    <div class="form-section">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='logo.jpg') }}" alt="Elkarnak Logo" class="logo-image">
+            <p class="logo-text-small" style="color: var(--primary-red); font-weight: bold;">♥</p>
+        </div>
+        
+        <h4> مطعم الكرنك يرحب بكم </h4>
+        
         {% if error %}
-        <div class="error">{{ error }}</div>
+        <p class="error-message">{{ error }}</p>
         {% endif %}
 
-        <form action="{{ url_for('login') }}" method="post">
+        <form method="POST">
+            <div class="form-group">
+                <div class="input-wrapper">
+                    <input type="text" id="username" name="username" placeholder="أدخل اسم المستخدم" required autofocus>
+                    <span class="icon">👤</span> 
+                </div>
+            </div>
 
-            <label for="username">اسم المستخدم</label>
-            <input id="username" name="username" placeholder="اكتب اسم المستخدم" required>
-
-            <button type="submit">دخول</button>
-
-            <a class="browse" href="{{ url_for('menu') }}">تصفح القائمة بدون تسجيل</a>
+            <button type="submit" class="btn-login"> تسجيل الدخول </button>
+            <p class="warning-text">رقم التواصل : 01222222222</p>
         </form>
     </div>
+    
+    <div class="image-section">
+        <img src="{{ url_for('static', filename='big-burger.png') }}" alt="Big Burger Image"> 
+    </div>
+
+</div>
 
 </body>
 </html>

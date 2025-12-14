@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>لوحة الأدمن</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"> 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 <style>
-/* بعض الأنماط الافتراضية إذا لم تكن موجودة في style.css */
+/* الأنماط الإضافية للوحة الأدمن */
 .card { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
 .card.bg-danger { background-color: #dc3545; color: white; }
 .card-title { margin-top: 0; }
@@ -14,8 +14,21 @@
 .btn-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
 .btn-warning { background-color: #ffc107; color: #212529; }
 .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.orders-list { max-height: 400px; overflow-y: auto; }
-.order-card { border-bottom: 1px dashed #ccc; padding-bottom: 10px; margin-bottom: 10px; }
+.orders-list { max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid #eee; border-radius: 6px;}
+.order-box { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 6px; background-color: #f9f9f9;}
+.order-items-details { margin-top: 10px; padding: 5px; border-top: 1px dashed #ddd; font-size: 0.9em; }
+.popup {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: #28a745;
+    color: #fff;
+    padding: 12px 18px;
+    border-radius: 8px;
+    z-index: 9999;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    display: none;
+}
 </style>
 </head>
 <body>
@@ -25,108 +38,107 @@
 </nav>
 <main class="container">
 <section class="admin-grid">
-<div class="card">
-<h3>المنتجات</h3>
-<table class="table">
-<thead><tr><th>ID</th><th>اسم</th><th>السعر</th><th>تعديل</th></tr></thead>
-<tbody>
-{% for p in products %}
-<tr data-id="{{ p.id }}">
-<td>{{ p.id }}</td>
-<td>{{ p.name }}</td>
-<td class="price-cell">{{ p.price }}</td>
-<td>
-<input class="new-price" type="number" placeholder="السعر الجديد">
-<button class="btn update-price-btn">حفظ</button>
-<button class="btn delete-product-btn">حذف</button>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
-<div class="add-product">
-<h4>إضافة منتج جديد</h4>
-<input type="text" id="new_name" placeholder="اسم المنتج">
-<input type="number" id="new_price" placeholder="السعر">
-<input type="text" id="new_image" placeholder="رابط الصورة">
-<input type="text" id="new_category" placeholder="التصنيف">
-<button id="addProductBtn" class="btn">إضافة</button>
-</div>
-</div>
-
-<div class="card">
-<h3>الطلبات</h3>
-<div class="orders-list">
-{% if orders %}
-{% for o in orders %}
-<div class="order-card">
-<div><strong>{{ o.order_id }}</strong> — {{ o.user }} — {{ o.timestamp }}</div>
-<div>الحالة: **{{ o.status }}** — الإجمالي: **{{ o.total }}** ج.م</div>
-{% if o.mobile and o.location %}
-<div style="font-size: 0.9em; margin-top: 5px;">
-    **رقم الهاتف:** {{ o.mobile }}
-    <br>
-    **الموقع:** {% if 'GPS:' in o.location %}
     
-    {% set coords = o.location.split('GPS:')[1].strip() %}
-        <a href="https://maps.google.com/?q={{ coords }}" target="_blank" style="color: blue; text-decoration: underline;">
-             عرض الموقع على الخريطة
-        </a>
-    {% else %}
-        {{ o.location }}
-    {% endif %}
-</div>
-{% endif %}
-<details>
-<summary>العناصر ({{ o.order_items|length }})</summary>
-<ul>
-{% for it in o.order_items %}
-<li>{{ it.name }} × {{ it.qty }} — {{ it.price }} ج.م</li>
-{% endfor %}
-</ul>
-</details>
-</div>
-{% endfor %}
-{% else %}
-<p>لا توجد طلبات حتى الآن</p>
-{% endif %}
-</div>
-
-<hr>
-<div class="card bg-danger text-white">
-    <div class="card-body">
-        <h5 class="card-title">منطقة الإجراءات الخطيرة</h5>
-        <p class="card-text">استخدم هذا الزر لمسح جميع الطلبات المخزنة في النظام بشكل دائم. **هذه العملية لا يمكن التراجع عنها!**</p>
-        
-        <form id="deleteAllOrdersForm" method="POST" action="{{ url_for('delete_all_orders') }}" 
-              onsubmit="return confirm('⚠️ تحذير: هل أنت متأكد تماماً من حذف جميع الطلبات؟ هذا سيؤدي لمسح جميع بيانات الطلبات بشكل دائم.');">
-            
-            <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token', '') }}">
-            
-            <button type="submit" class="btn btn-warning btn-lg text-dark" style="width: 100%;">
-                مسح جميع الطلبات
-            </button>
-        </form>
+    <div class="card">
+        <h3>المنتجات</h3>
+        <table class="table">
+            <thead><tr><th>ID</th><th>اسم</th><th>السعر</th><th>تعديل</th></tr></thead>
+            <tbody>
+            {% for p in products %}
+            <tr data-id="{{ p.id }}">
+                <td>{{ p.id }}</td>
+                <td>{{ p.name }}</td>
+                <td class="price-cell">{{ "%.2f"|format(p.price) }}</td>
+                <td>
+                    <input class="new-price" type="number" placeholder="السعر الجديد" step="0.01">
+                    <button class="btn update-price-btn">حفظ</button>
+                    <button class="btn delete-product-btn">حذف</button>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <div class="add-product">
+            <h4>إضافة منتج جديد</h4>
+            <input type="text" id="new_name" placeholder="اسم المنتج">
+            <input type="number" id="new_price" placeholder="السعر" step="0.01">
+            <input type="text" id="new_image" placeholder="رابط الصورة">
+            <input type="text" id="new_category" placeholder="التصنيف">
+            <button id="addProductBtn" class="btn">إضافة</button>
+        </div>
     </div>
-</div>
-</div>
+
+    <div class="card">
+        <h3>الطلبات (تحديث تلقائي)</h3>
+        <div class="orders-list" id="ordersList">
+            <p>جارٍ تحميل الطلبات...</p>
+        </div>
+
+        <hr>
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">منطقة الإجراءات الخطيرة</h5>
+                <p class="card-text">استخدم هذا الزر لمسح جميع الطلبات المخزنة في النظام بشكل دائم. **هذه العملية لا يمكن التراجع عنها!**</p>
+                
+                <form id="deleteAllOrdersForm" method="POST" action="{{ url_for('delete_all_orders') }}"
+                    onsubmit="return confirm('⚠️ تحذير: هل أنت متأكد تماماً من حذف جميع الطلبات؟ هذا سيؤدي لمسح جميع بيانات الطلبات بشكل دائم.');">
+                    
+                    <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token', '') }}">
+                    
+                    <button type="submit" class="btn btn-warning btn-lg text-dark" style="width: 100%;">
+                        مسح جميع الطلبات
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </section>
 </main>
 
-<input type="hidden" id="csrf_token" value="{{ session.get('csrf_token', '') }}">
+<div id="newOrderPopup" class="popup">⚡ طلب جديد وصل!</div>
 
+<audio id="notifySound" src="{{ url_for('static', filename='notify.wav') }}" preload="auto"></audio>
+
+<input type="hidden" id="csrf_token" value="{{ session.get('csrf_token', '') }}">
+<input type="hidden" id="initial_last_order_id" value="{{ orders[-1].order_id if orders and orders|length > 0 else '' }}">
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
-    // جلب CSRF Token من الحقل المخفي
     const csrfToken = document.getElementById('csrf_token') ? document.getElementById('csrf_token').value : '';
+    const notifySound = document.getElementById('notifySound');
+    const popup = document.getElementById('newOrderPopup');
+    
+    let lastOrderId = document.getElementById('initial_last_order_id').value || null;
+    let pollingInterval = 4000; // 3 ثواني استعلام
 
-    /**
-     * دالة لإرسال طلب POST آمن (مع CSRF Token)
-     * تستخدم لـ: تحديث السعر، حذف منتج، إضافة منتج.
-     * ملاحظة: تم إزالة هذا المنطق من زر "مسح جميع الطلبات" وتم استخدام نموذج HTML قياسي بدلاً منه لتبسيط إرسال CSRF.
-     */
+    let orderPollingInterval = null;
+
+    // =================================================================================
+    // دوال مساعدة
+    // =================================================================================
+    function formatNumber(n) {
+        const num = Number(n || 0);
+        if (Number.isNaN(num)) return '0.00';
+        return num.toFixed(2);
+    }
+
+    // ✅ تصحيح دالة التعقيم (Sanitization) - مهم جداً للأمان
+    function escapeHtml(unsafe) {
+        if (unsafe === null || unsafe === undefined) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": "'", 
+        };
+        return unsafe.toString().replace(/[&<>"']/g, (m) => map[m]);
+    }
+
+    // =================================================================================
+    // POST helper (للعمليات الآمنة: يدعم CSRF في Header أو كحقل FormData)
+    // =================================================================================
     async function sendAdminRequest(url, body = null, formData = null) {
         if (!csrfToken) {
             alert('خطأ أمني: رمز CSRF غير موجود. يرجى إعادة تحميل الصفحة.');
@@ -137,39 +149,41 @@ document.addEventListener('DOMContentLoaded', () => {
         let requestBody;
 
         if (formData) {
-            // FormData: نضيف الرمز إليها
             formData.append('csrf_token', csrfToken);
             requestBody = formData;
-        } else if (body) {
-            // JSON: نضيف الرمز إلى الجسم
-            headers['Content-Type'] = 'application/json';
-            body.csrf_token = csrfToken;
-            requestBody = JSON.stringify(body);
+            // لا حاجة لتعيين Content-Type لـ FormData
         } else {
-            return { success: false, message: 'بيانات الطلب غير صالحة.' };
+            // جميع طلبات JSON أو POST الفارغة
+            headers['Content-Type'] = 'application/json';
+            headers['X-CSRFToken'] = csrfToken;
+            requestBody = body ? JSON.stringify(body) : JSON.stringify({});
         }
 
         try {
             const res = await fetch(url, {
                 method: 'POST',
-                headers: headers,
+                headers: formData ? {} : headers, // لا تستخدم Headers مع FormData
                 body: requestBody
             });
+            if (res.status === 403) {
+                return { success: false, message: 'Forbidden - خطأ أمني: رمز CSRF غير صالح أو ليس لديك صلاحية.' };
+            }
             return res.json();
-        } catch(e) {
+        } catch (e) {
             console.error("Fetch error:", e);
             return { success: false, message: 'حدث خطأ في الاتصال بالخادم.' };
         }
     }
 
-
-    // تحديث السعر والحذف (باستخدام AJAX)
+    // =================================================================================
+    // CRUD المنتجات
+    // (يستخدم sendAdminRequest الآمن)
+    // =================================================================================
     document.addEventListener('click', async (e) => {
         const tr = e.target.closest('tr');
         if (!tr) return;
         const id = tr.getAttribute('data-id');
 
-        // 1. تحديث السعر
         if (e.target.classList.contains('update-price-btn')) {
             const priceInput = tr.querySelector('.new-price');
             const price = priceInput.value;
@@ -180,24 +194,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const form = new FormData();
             form.append('id', id);
             form.append('price', price);
-            
-            // إرسال الطلب عبر الدالة الآمنة (FormData)
+
             const j = await sendAdminRequest("{{ url_for('update_price') }}", null, form);
-            
             alert(j.message);
             if (j.success) {
-                tr.querySelector('.price-cell').textContent = parseFloat(price).toFixed(2);
+                tr.querySelector('.price-cell').textContent = formatNumber(price);
                 priceInput.value = '';
             }
         }
 
-        // 2. حذف المنتج
         if (e.target.classList.contains('delete-product-btn')) {
             if (!confirm('هل أنت متأكد من حذف المنتج؟')) return;
 
-            // إرسال الطلب عبر الدالة الآمنة (JSON)
             const j = await sendAdminRequest("{{ url_for('delete_product') }}", { id: id });
-            
             alert(j.message);
             if (j.success) {
                 tr.remove();
@@ -205,7 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 3. إضافة منتج جديد
     document.getElementById('addProductBtn')?.addEventListener('click', async () => {
         const name = document.getElementById('new_name').value;
         const price = document.getElementById('new_price').value;
@@ -216,14 +224,155 @@ document.addEventListener('DOMContentLoaded', () => {
             return alert('الرجاء إدخال الاسم والسعر بشكل صحيح.');
         }
 
-        // إرسال الطلب عبر الدالة الآمنة (JSON)
         const j = await sendAdminRequest("{{ url_for('add_product') }}", { name, price, image, category });
-
         alert(j.message);
         if (j.success) {
             location.reload();
         }
     });
+
+    // =================================================================================
+    // وظائف الطلبات الحية - poll + notification + render
+    // =================================================================================
+
+    function showPopup(text) {
+        popup.textContent = text;
+        popup.style.display = 'block';
+        setTimeout(()=> popup.style.display = 'none', 6000);
+    }
+
+    function renderOrders(orders) {
+        const container = document.getElementById("ordersList");
+        if (!container) return;
+        container.innerHTML = "";
+
+        // الأحدث أولاً
+        orders.slice().reverse().forEach(o => {
+            const user = escapeHtml(o.user || 'ضيف');
+            const mobile = escapeHtml(o.mobile);
+            const timestamp = escapeHtml(o.timestamp);
+            const order_id = escapeHtml(o.order_id);
+            const total = formatNumber(o.total || 0);
+
+            // عناصر الطلب
+            const itemsList = (o.order_items || []).map(item =>
+                // ✅ استخدام escapeHtml للعناصر قبل عرضها
+                `${escapeHtml(item.name || 'منتج غير معروف')} × ${escapeHtml(item.qty || 1)} (${formatNumber(item.price || 0)} ج.م)`
+            ).join('<br>');
+
+            let locationHtml = escapeHtml(o.location || '');
+            if (o.location && typeof o.location === 'string' && o.location.startsWith('GPS:')) {
+                const coords = encodeURIComponent(o.location.split('GPS:')[1].trim());
+                // ✅ تصحيح رابط Google Maps
+                locationHtml = `<a href="https://maps.google.com/?q=${coords}" target="_blank" style="color: blue; text-decoration: underline;">عرض الموقع على الخريطة</a>`;
+            }
+
+            container.innerHTML += `
+                <div class="order-box">
+                    <h4>طلب رقم: ${order_id} - ${total} ج.م</h4>
+                    <p>🙋‍♂️ العميل: ${user}</p>
+                    <p>📱 الهاتف: ${mobile}</p>
+                    <p>📍 الموقع: ${locationHtml}</p>
+                    <p>📅 الوقت: ${timestamp}</p>
+                    <div class="order-items-details">
+                        <strong>🛒 تفاصيل الطلب:</strong><br>
+                        ${itemsList}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    // جلب الطلبات ومقارنة آخر order_id
+    async function pollOrders() {
+        try {
+            // ✅ تصحيح اسم المسار المفقود ('get_orders' بدلاً من 'check_new_orders')
+            const res = await fetch("{{ url_for('get_orders') }}", { cache: "no-store" });
+
+            if (res.status === 403) {
+                console.warn("Not authorized as Admin. Stopping polling.");
+                if (orderPollingInterval) clearInterval(orderPollingInterval);
+                return;
+            }
+            if (!res.ok) {
+                console.error("Failed to fetch orders:", res.status);
+                return;
+            }
+            
+            const data = await res.json();
+            if (!data.success) return;
+
+            const orders = data.orders || [];
+            const newest = orders.length ? orders[orders.length - 1].order_id : null;
+
+            const shouldRender = !lastOrderId || (newest && newest !== lastOrderId);
+
+            if (shouldRender) {
+                // تشغيل الصوت والـ popup إذا كان هناك طلب جديد
+                if (lastOrderId && newest && newest !== lastOrderId) {
+                    try { 
+                        // هذا السطر يضمن تشغيل الصوت من البداية في كل مرة
+                        notifySound.currentTime = 0; 
+                        notifySound.play().catch(()=>{}); 
+                    } catch(e) {}
+                    showPopup(`⚡ طلب جديد #${escapeHtml(newest)}`);
+                }
+
+                renderOrders(orders);
+
+                if (newest) lastOrderId = newest;
+            }
+        } catch (e) {
+            console.error("pollOrders error:", e);
+            const container = document.getElementById("ordersList");
+            if (container && container.innerHTML.includes('جارٍ تحميل')) {
+                container.innerHTML = '<p style="color:red;">فشل في جلب الطلبات. تحقق من اتصال الخادم.</p>';
+            }
+        }
+    }
+
+    // ابدأ الPolling
+    // ابدأ الPolling
+    if (document.getElementById("ordersList")) {
+        pollOrders();
+        orderPollingInterval = setInterval(pollOrders, pollingInterval);
+    }
+
+    // =================================================================================
+    // 🎧 حل مشكلة تشغيل الصوت التلقائي (Autoplay)
+    // =================================================================================
+    // عند أول نقرة أو تفاعل للمستخدم، نقوم بتشغيل الصوت مرة واحدة.
+    // هذا "يحرر" (Unlocks) إذن تشغيل الصوت التلقائي لاحقاً في دالة pollOrders.
+    
+    let isSoundUnlocked = false;
+
+    function unlockSound(e) {
+        if (isSoundUnlocked) {
+            document.removeEventListener('click', unlockSound);
+            return;
+        }
+        
+        // محاولة تشغيل الصوت (قد يفشل)، ولكن الهدف هو "فتح" الإذن
+        try {
+            notifySound.play().catch(err => {
+                // قد تفشل المحاولة الأولى، لكن المهم أن المتصفح سجل التفاعل
+                console.log("Autoplay failed, but interaction registered.");
+            });
+            notifySound.pause(); // نوقفها فوراً
+            notifySound.currentTime = 0;
+            isSoundUnlocked = true;
+        } catch(err) {
+            console.error("Error unlocking audio:", err);
+        }
+        
+        // بعد التفاعل الأول، نزيل المستمع لعدم الحاجة إليه
+        document.removeEventListener('click', unlockSound);
+        document.removeEventListener('scroll', unlockSound);
+    }
+
+    // استمع لأول نقرة أو تمرير في الصفحة
+    document.addEventListener('click', unlockSound, { once: true });
+    document.addEventListener('scroll', unlockSound, { once: true }); 
 });
 </script>
 </body>
